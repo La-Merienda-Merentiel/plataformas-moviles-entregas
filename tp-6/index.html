@@ -1,1 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pokemon App</title>
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .pokemon-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      grid-gap: 20px;
+    }
+    .pokemon-card {
+      text-align: center;
+      padding: 10px;
+      border: 4px solid #fff;
+      background-color: #ffffff00;
+      border-radius: 8px;
+      transition: transform 0.2s;
+    }
+    .pokemon-card:hover {
+      transform: scale(1.05);
+    }
+    .pokemon-info {
+      display: none;
+    }
+    #loadMore {
+      margin-top: 20px;
+      text-align: center;
+    }
+    .spinner {
+      display: none;
+      margin: 20px auto;
+    }
+    .btn
+    {
+        font-weight: bold;
 
+    }
+    body{
+        background: url(pok3.jpg);
+
+    }
+    .text-center
+    {
+        color: aliceblue;
+        background-color: black;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container mt-5">
+
+  <h1 class="text-center">Pokemon App</h1>
+
+  <div class="pokemon-grid" id="pokemonGrid"></div>
+
+  <div id="loadMore">
+    <button class="btn btn-primary" onclick="loadMore()">Cargar más Pokemon</button>
+    <div class="spinner-border text-primary spinner" role="status">
+      <span class="sr-only">Cargando...</span>
+    </div>
+  </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.1/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+
+<script>
+  let offset = 0;
+  const limit = 12; 
+  // Número de Pokémon a cargar por página
+
+  // Espera a que el documento esté cargado
+  document.addEventListener('DOMContentLoaded', function () {
+    loadPokemons();
+  });
+
+  // Función para cargar los Pokémon
+  function loadPokemons() {
+    const pokemonGrid = document.getElementById('pokemonGrid');
+    const loadMoreButton = document.getElementById('loadMore');
+    const spinner = document.querySelector('.spinner');
+
+    // Muestra el spinner y oculta el botón de carga
+    spinner.style.display = 'block';
+    loadMoreButton.style.display = 'none';
+
+    // Llama a la PokéAPI para obtener los Pokémon
+    fetch(`https://pokeapi.co/api/v2/pokemon?limit=${limit}&offset=${offset}`)
+      .then(response => response.json())
+      .then(data => {
+        // Itera sobre la lista de Pokémon y crea tarjetas en la grilla
+        data.results.forEach(pokemon => {
+          createPokemonCard(pokemonGrid, pokemon);
+        });
+
+        // Incrementa el offset para la próxima carga
+        offset += limit;
+
+        // Oculta el spinner y muestra el botón de carga
+        spinner.style.display = 'none';
+        loadMoreButton.style.display = 'block';
+      })
+      .catch(error => console.error('Error fetching Pokémon list:', error));
+  }
+
+  // Función para crear una tarjeta de Pokémon
+  function createPokemonCard(container, pokemon) {
+    const card = document.createElement('div');
+    card.className = 'pokemon-card';
+
+    const button = document.createElement('button');
+    button.className = 'btn btn-danger';
+    button.textContent = pokemon.name;
+    button.addEventListener('click', () => showPokemonInfo(pokemon.url));
+
+    card.appendChild(button);
+    container.appendChild(card);
+  }
+
+  // Función para cargar más Pokémon al hacer clic en el botón
+  function loadMore() {
+    loadPokemons();
+  }
+
+  // Función para mostrar la información adicional del Pokémon
+  function showPokemonInfo(url) {
+    fetch(url)
+      .then(response => response.json())
+      .then(data => {
+        const modalBody = document.createElement('div');
+
+        const types = data.types.map(type => type.type.name).join(', ');
+        const abilities = data.abilities.map(ability => ability.ability.name).join(', ');
+
+        modalBody.innerHTML = `
+          <p><strong>Nombre:</strong> ${data.name}</p>
+          <p><strong>Altura:</strong> ${data.height}</p>
+          <p><strong>Peso:</strong> ${data.weight}</p>
+          <p><strong>Tipos:</strong> ${types}</p>
+          <p><strong>Habilidades:</strong> ${abilities}</p>
+        `;
+
+        // Muestra el modal con la información
+        showModal(data.name, modalBody);
+      })
+      .catch(error => console.error('Error fetching Pokémon info:', error));
+  }
+
+  // Función para mostrar el modal con la información del Pokémon
+  function showModal(title, content) {
+    $('#pokemonModalTitle').text(title);
+    $('#pokemonModalBody').html(content);
+    $('#pokemonModal').modal('show');
+  }
+</script>
+
+<!--  muestra la información adicional del Pokémon -->
+<div class="modal fade" id="pokemonModal" tabindex="-1" role="dialog" aria-labelledby="pokemonModalTitle" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="pokemonModalTitle"></h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" id="pokemonModalBody"></div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
